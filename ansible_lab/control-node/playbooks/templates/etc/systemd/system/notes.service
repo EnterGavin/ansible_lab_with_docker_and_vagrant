@@ -1,0 +1,19 @@
+[Unit]
+Description=Notes Application
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=app
+WorkingDirectory=/opt/notes
+ExecStart=/usr/bin/java \
+  -Djava.awt.headless=true \
+  -Djava.security.egd=file:/dev/./urandom \
+  -jar /opt/notes/target/easy-notes-{{ app_version.stdout }}.jar
+SuccessExitStatus=143
+Restart=always
+RestartSec=5
+SyslogIdentifier=notes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,99 @@
+---
+- name: Configurar servidor de aplicacao java
+  hosts: app01
+  become: true
+
+  vars:
+    dbhosts: "db01"
+    dbname: "notes"
+    dbusername: "notesapps"
+    dbpassword: "12345"
+
+  tasks:
+    # --------------------------------------------------
+    # HOSTS
+    # --------------------------------------------------
+    - name: Configurar hosts lab_ansible
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ item }}"
+        state: present
+        create: yes
+      loop:
+        - "172.17.0.2 control_node"
+        - "172.17.0.3 db01"
+        - "172.17.0.4 app01"
+
+    # --------------------------------------------------
+    # USUARIO
+    # --------------------------------------------------
+    - name: Adicionar usuario da aplicacao
+      user:
+        name: app
+        comment: Usuario da aplicacao
+        uid: 500
+        shell: /bin/bash
+
+    # --------------------------------------------------
+    # DEPENDENCIAS
+    # --------------------------------------------------
+    - name: Instalacao do Maven
+      yum:
+        name: maven
+        state: present
+
+    - name: Instalacao do Java
+      yum:
+        name: java-1.8.0-openjdk
+        state: present
+
+    # --------------------------------------------------
+    # APLICACAO
+    # --------------------------------------------------
+    - name: Garantir diretorio da aplicacao
+      file:
+        path: /opt/notes
+        state: directory
+        owner: app
+        group: app
+
+    - name: Clone do repositorio Notes - app
+      git:
+        repo: https://github.com/callicoder/spring-boot-mysql-rest-api-tutorial.git
+        dest: /opt/notes
+        update: yes
+        force: yes
+      become_user: app
+
+    - name: Configurar application.properties
+      template:
+        src: application.properties
+        dest: /opt/notes/src/main/resources/application.properties
+        owner: app
+        group: app
+
+    # --------------------------------------------------
+    # BUILD (SEM TESTES)
+    # --------------------------------------------------
+    - name: Gerar pacote da aplicacao (sem testes)
+      command: mvn clean package -DskipTests
+      args:
+        chdir: /opt/notes
+      become_user: app
+
+    # --------------------------------------------------
+    # EXECUCAO (SEM SYSTEMD)
+    # --------------------------------------------------
+    - name: Localizar jar gerado
+      shell: ls /opt/notes/target/*.jar | head -n 1
+      register: app_jar
+      changed_when: false
+
+    - name: Parar aplicacao antiga (se existir)
+      shell: pkill -f easy-notes || true
+
+    - name: Subir aplicacao Spring Boot
+      shell: |
+        nohup java -jar {{ app_jar.stdout }} \
+          > /var/log/notes.log 2>&1 &
+      become_user: app

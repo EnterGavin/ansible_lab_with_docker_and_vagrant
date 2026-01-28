@@ -1,0 +1,6 @@
+#/bin/sh
+
+cat << EOT >> /root/.ssh/authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCfVAf8TNS32NGQ6QBBsGOqbNxaS45pYz+RRnQBsWFbRUPc+VTwcX0Q1IUagpM/yDDmLu9JyF5i5Q4Ey7SoGxPL7/M+/v2rnDOfwYwxiZ8PnXX3KJ7fB0cvwiyX3Nc+Txrm95Ztv5ajW6zkl4TEMOZOgjj27aeX/pXaR6BgxYMVMqz49oXfxdSGZC6BqpbHaIFUv5NQE+V9HSA5WHQhRDB9xyPmta5CwxvDJrLHfrlLSoijTv+/gebDIr/OVNrmiUOqqnD22rU0HLuMBRefcJnwpWHRUiiuLieHoD2UA9KHPaRDfgitZl8D9eNLd3XPKLqPEfdrvA5DS3TFDdGZsQ3yiayjFHGladr0ueW+6zi5X6G2W496uZ0DIjyB+nquW3PkvK3QztpLtgl+DJHIxWsHN2qXf5e778rmOQYKIh6i/AYsE4PTjg33GPb8rGzhCamwsXZkSU3UsMrNl9hOrMBRwgYcAEhXjS3TcYqqh6GRnFE1VA/IGAnPxV/MzboMmCU= root@control-node
+EOT
+chmod 600 /root/.ssh/authorized_keys

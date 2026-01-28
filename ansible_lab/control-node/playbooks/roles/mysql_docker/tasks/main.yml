@@ -1,0 +1,40 @@
+- name: Garantir dependências do sistema
+  become: true
+  package:
+    name:
+      - python3
+      - python3-pip
+    state: present
+
+- name: Garantir PyMySQL instalado
+  become: true
+  pip:
+    name: PyMySQL
+    executable: pip3
+
+- name: Aguardar MySQL subir
+  wait_for:
+    path: /var/lib/mysql/mysql.sock
+    state: present
+    timeout: 60
+
+- name: Criar bancos de dados
+  become: true
+  community.mysql.mysql_db:
+    name: "{{ item.name }}"
+    encoding: "{{ item.encoding | default(omit) }}"
+    collation: "{{ item.collation | default(omit) }}"
+    state: present
+    login_unix_socket: /var/lib/mysql/mysql.sock
+  loop: "{{ mysql_databases }}"
+
+- name: Criar usuários MySQL
+  become: true
+  community.mysql.mysql_user:
+    name: "{{ item.name }}"
+    host: "{{ item.host | default('%') }}"
+    password: "{{ item.password }}"
+    priv: "{{ item.priv }}"
+    state: present
+    login_unix_socket: /var/lib/mysql/mysql.sock
+  loop: "{{ mysql_users }}"

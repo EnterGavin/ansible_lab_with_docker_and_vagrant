@@ -1,0 +1,28 @@
+---
+- name: Configurar servidor de banco de dados
+  hosts: db01
+  remote_user: root
+  become: false
+
+  vars_files:
+    - vars/main.yml
+
+  vars:
+    dbname: db01
+    dbusername: root
+    dbpassword: "12345"
+
+  tasks:
+    - name: Configurar hosts lab_ansible
+      become: true
+      shell: |
+        grep -qxF '172.17.0.2 control_node' /etc/hosts || echo '172.17.0.2 control_node' >> /etc/hosts
+        grep -qxF '172.17.0.3 db01' /etc/hosts || echo '172.17.0.3 db01' >> /etc/hosts
+        grep -qxF '172.17.0.4 app01' /etc/hosts || echo '172.17.0.4 app01' >> /etc/hosts
+
+  collections:
+    - community.mysql
+
+  roles:
+    - configuracao-default-so
+    - mysql_docker

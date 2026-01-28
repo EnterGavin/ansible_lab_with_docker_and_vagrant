@@ -1,0 +1,17 @@
+Vagrant.configure("2") do |config|
+
+  config.vm.provider "docker" do |d|
+    d.build_dir = "."
+    d.name = "db01"
+    d.remains_running = true
+  end
+
+  config.vm.hostname = "db01"
+
+  config.vm.network "forwarded_port",
+    guest: 3306,
+    host: 3307
+  
+  config.vm.provision "shell", path: "provision.sh"
+
+end

@@ -1,0 +1,16 @@
+Vagrant.configure("2") do |config|
+
+  config.vm.provider "docker" do |d|
+    d.build_dir = "."
+    d.name = "app01"
+    d.remains_running = true
+
+    # Mapeia a porta SSH para a máquina host
+    d.ports = ["2222:22"]
+    # Opcional: mapeia porta da aplicação
+    d.ports << "8080:8080"
+  end
+
+  config.vm.hostname = "app01"
+
+end
