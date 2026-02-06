@@ -19,6 +19,7 @@
         line: "{{ item }}"
         state: present
         create: yes
+        unsafe_writes: yes
       loop:
         - "172.17.0.2 control_node"
         - "172.17.0.3 db01"
@@ -33,19 +34,7 @@
         comment: Usuario da aplicacao
         uid: 500
         shell: /bin/bash
-
-    # --------------------------------------------------
-    # DEPENDENCIAS
-    # --------------------------------------------------
-    - name: Instalacao do Maven
-      yum:
-        name: maven
-        state: present
-
-    - name: Instalacao do Java
-      yum:
-        name: java-1.8.0-openjdk
-        state: present
+        create_home: yes
 
     # --------------------------------------------------
     # APLICACAO
@@ -56,6 +45,7 @@
         state: directory
         owner: app
         group: app
+        mode: "0755"
 
     - name: Clone do repositorio Notes - app
       git:
@@ -65,12 +55,20 @@
         force: yes
       become_user: app
 
+    - name: Ajustar permissoes da aplicacao
+      file:
+        path: /opt/notes
+        owner: app
+        group: app
+        recurse: yes
+
     - name: Configurar application.properties
       template:
         src: application.properties
         dest: /opt/notes/src/main/resources/application.properties
         owner: app
         group: app
+        mode: "0644"
 
     # --------------------------------------------------
     # BUILD (SEM TESTES)
@@ -89,11 +87,21 @@
       register: app_jar
       changed_when: false
 
+    - name: Copiar jar para local padrao
+      copy:
+        src: "{{ app_jar.stdout }}"
+        dest: /opt/notes/app.jar
+        remote_src: yes
+        owner: app
+        group: app
+        mode: "0755"
+
     - name: Parar aplicacao antiga (se existir)
-      shell: pkill -f easy-notes || true
+      shell: |
+        pgrep -f "/opt/notes/app.jar" && pkill -f "/opt/notes/app.jar" || true
 
     - name: Subir aplicacao Spring Boot
       shell: |
-        nohup java -jar {{ app_jar.stdout }} \
-          > /var/log/notes.log 2>&1 &
+        nohup java -jar /opt/notes/app.jar \
+          > /opt/notes/notes.log 2>&1 &
       become_user: app
